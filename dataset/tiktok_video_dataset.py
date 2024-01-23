@@ -139,7 +139,17 @@ class BaseDataset(TsvCondImgCompositeDataset):
         if state is not None:
             torch.set_rng_state(state)
         return transform(frame)
-
+    
+    def get_current_video_start_end(self, img_idx):
+        row = self.get_row_from_tsv(self.vid2line_tsv, img_idx)
+        image_key = row[0]
+        if self.is_composite:
+            assert image_key in self.image_keys[img_idx] # keli: ugly fix
+        else:
+            assert image_key == self.image_keys[img_idx]
+        start_end = json.loads(row[1])
+        return start_end
+    
     def _get_frame_idx_seq(self, start_img_key, nframes: int, frame_interval: int):
         format1 = r"^(.*TiktokDance_\d+_)(\d+)(\.\w+)$"
         format2 = r"^(TiktokDance_\d+_\d+_1x1_)(\d+)(\.\w+)$"
@@ -174,6 +184,9 @@ class BaseDataset(TsvCondImgCompositeDataset):
         return True, img_idx_seq
 
     def get_metadata(self, idx):
+        start_end = self.get_current_video_start_end(idx)
+        while (idx - start_end[0]) % self.eval_sample_interval != 0:
+            idx -= 1
         while True:
             img_idx, cap_idx = self.get_image_cap_index(idx)
             status, frame_idx_seq = self._get_frame_idx_seq(
@@ -293,9 +306,8 @@ class BaseDataset(TsvCondImgCompositeDataset):
             idx = int(idx * self.train_sample_interval)
             idx = idx + random.randint(0, self.train_sample_interval - 1)
             idx = min(idx, len(self) - 1)
-        elif self.split == "eval":
+        elif self.split == "val":
             idx = int(idx * self.eval_sample_interval)
-
         raw_data = self.get_metadata(idx)
         img_seq = raw_data["img_seq"]
         pose_img_seq = raw_data["pose_img_seq"]

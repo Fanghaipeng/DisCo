@@ -28,7 +28,7 @@ def copy_files(input_folder, output_folder, use_symlink=False, selected_frame_id
                 selected_frame_idx = max(min(selected_frame_idx, len(file_list) - 1), 0)
 
             for idx, file in enumerate(file_list):
-                if idx != selected_frame_idx:
+                if selected_frame_idx !=-1 and idx != selected_frame_idx:
                     continue
 
                 # Skip files of 0 size

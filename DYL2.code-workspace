@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../../envs/anaconda3/env/DYL/lib/python3.10/site-packages/diffusers"
+		},
+		{
+			"path": "../../MotionFlow"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {}
+}

@@ -51,13 +51,13 @@ def dist_init(args, distributed=True):
         elif 'WORLD_SIZE' in os.environ:
             args.num_gpus = int(
                 os.environ['WORLD_SIZE']) if 'WORLD_SIZE' in os.environ else 1
-            args.word_size = args.num_gpus
+            args.world_size = args.num_gpus
             local_rank = int(os.environ['LOCAL_RANK'])
             rank = int(os.environ['RANK'])
             args.distributed = True  # args.num_gpus > 1
             args.local_rank = local_rank
             args.rank = rank
-            args.num_nodes = world_size // args.local_size  # hardcoded
+            args.num_nodes = args.world_size // args.local_size  # hardcoded
             args.node_id = int(args.rank / args.local_size)
             if args.distributed:
                 LOGGER.info(

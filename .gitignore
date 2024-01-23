@@ -21,6 +21,12 @@ __pycache__/
 *.py[cod]
  C extensions
 *.so
+*.png
+*.jpg
+*.gz
+*.pth
+runtest/
+wandb/
 
 # Distribution / packaging
 bin/

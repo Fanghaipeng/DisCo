@@ -309,13 +309,13 @@ class TemConvNet(Net):
         bsz = image_seq.shape[0]
 
         # drop pose
-        if self.args.drop_pose_ratio > 0:
-            for t in range(self.args.nframes):
-                p = random.random()
-                if p <= self.args.drop_pose_ratio:
-                    inputs["cond_img_seq"][:, :, t] = torch.ones_like(
-                        inputs["cond_img_seq"][:, :, t]
-                    ) * inputs["cond_img_seq"][:, :, t, 0, 0].unsqueeze(2).unsqueeze(2)
+        # if self.args.drop_pose_ratio > 0:
+        #     for t in range(self.args.nframes):
+        #         p = random.random()
+        #         if p <= self.args.drop_pose_ratio:
+        #             inputs["cond_img_seq"][:, :, t] = torch.ones_like(
+        #                 inputs["cond_img_seq"][:, :, t]
+        #             ) * inputs["cond_img_seq"][:, :, t, 0, 0].unsqueeze(2).unsqueeze(2)
 
         if self.args.ref_null_caption:  # default to False
             text = inputs["input_text"]

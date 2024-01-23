@@ -35,7 +35,6 @@ def build_feature_extractor(mode, root_dir, device=torch.device("cuda"), sample_
         for key, value in model_data['state_dict'].items():
             key_new = key.replace('module.', '')
             model_state_new[key_new] = value
-
         feat_model.load_state_dict(model_state_new)
         feat_model = feat_model.to(device).eval()
     elif mode == "FVD-3DInception":  # based on logits to calcuate, which can be found the description from latent vision transformer

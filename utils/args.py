@@ -185,7 +185,7 @@ class Args(object):
         
         ### reference image attention
         parser.add_argument("--unet_unfreeze_type", default=None,  type=str, # if set --freeze_unet=False, will ft all the unet
-                            choices=["crossattn-kv", "crossattn", "transblocks", "all", "null"],
+                            choices=["crossattn-kv", "crossattn", "transblocks", "all", "tem", "motion", "tem_motion", "null"],
                             help="which structure of unet will be unfreezed")
         parser.add_argument('--controlnet_attn', type=str_to_bool,
                             nargs='?', const=True, default=False, help="if use ref image to replace the text prompt in controlnet")
@@ -206,6 +206,8 @@ class Args(object):
         parser.add_argument('--combine_use_mask',  type=str_to_bool,
                             nargs='?', const=True, default=False, help='if add mask annotation to the (attn + controlnet) structure; default: attn human pose; controlnet background')
         parser.add_argument("--drop_ref", default=0., type=float, # drop the reference image during trianing?
+                            help="prob to drop reference image")
+        parser.add_argument("--drop_pose_ratio", default=0., type=float, # drop the reference image during trianing?
                             help="prob to drop reference image")
         parser.add_argument('--my_adapter', type=str_to_bool,
                             nargs='?', const=True, default=False, help='if use my adapter?')

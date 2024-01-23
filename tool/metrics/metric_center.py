@@ -602,7 +602,8 @@ def compute_dtssd_video_scores(gen_inst_name_full, gt_inst_name_full, sample_dur
             print(f"gen_name: {gen_name}, gt_name: {gt_name} failed to compute dtssd")
             break
         else:
-            pbar.set_description(f"computing dtssd for {gen_name} and {gt_name}")
+            donothing = True
+            # pbar.set_description(f"computing dtssd for {gen_name} and {gt_name}")
 
         gen_diff = gen_video[1] - gen_video[0]
         gt_diff = gt_video[1] - gt_video[0]
@@ -886,22 +887,22 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--root_dir', type=str, default="/f_ndata/G")
-    parser.add_argument('--path_gen', type=str, default="sdm/SDM_KLF8_S512_MSCOCO/eval_visu/pred")
-    parser.add_argument('--path_gt', type=str, default="dataset/mscoco/val2017")
+    parser.add_argument('--root_dir', type=str, default="/data/fanghaipeng/project/DYL/DisCo/runtest")
+    parser.add_argument('--path_gen', type=str, default="/data/fanghaipeng/project/DYL/DisCo/runtest/exp/s3_tem_t_samenoise/eval_visu/pred_gs1.5_scale-cond1.0-ref1.0_frames")
+    parser.add_argument('--path_gt', type=str, default="/data/fanghaipeng/project/DYL/DisCo/runtest/exp/s3_tem_t_samenoise/eval_visu/gt_frames")
     parser.add_argument('--num_gen', type=int, default=None)
     parser.add_argument('--num_gt', type=int, default=None)
-    parser.add_argument('--type', type=str, default='fid', nargs="+")
+    parser.add_argument('--type', type=str, default='fid-vid fvd', nargs="+")
     parser.add_argument('--blur', type=int, default=0)
     parser.add_argument('--num_splits', type=int, default=1)
-    parser.add_argument('--number_sample_frames', type=int, default=8)
-    parser.add_argument('--sample_duration', type=int, default=8)
+    parser.add_argument('--number_sample_frames', type=int, default=16)
+    parser.add_argument('--sample_duration', type=int, default=16)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--num_workers', type=int, default=16)
     parser.add_argument('--write_metric_to', type=str, default=None)
 
     args = parser.parse_args()
-
+    args.type = ['fid-vid', 'fvd']
     res_all = get_all_eval_scores(
         root_dir=args.root_dir,
         path_gen=args.path_gen, path_gt=args.path_gt,

@@ -33,10 +33,10 @@ def process_subfolder(subfolder, output_folder, fps, pbar, semaphore, format):
         output_path = Path(output_folder, f"{subfolder.name}.{format}")
         imageio.mimwrite(output_path, frames, fps=fps)
 
-        pbar.set_description(
-            f"Processed {subfolder.name}, which contains {len(frames)} frames"
-        )
-        pbar.update(1)
+        # pbar.set_description(
+        #     f"Processed {subfolder.name}, which contains {len(frames)} frames"
+        # )
+        # pbar.update(1)
 
 
 def create_gif_from_folder(input_folder, output_folder, fps, num_workers, format):

@@ -15,7 +15,8 @@ from utils.wutils_ldm import (
     complex_to_device, logger, ensure_dirname, file2data, data2file,
     Meter, Timer, adaptively_load_state_dict, get_parameters, ldm_tensor2img_wt, ldm_tensor2img)
 import wandb
-
+from tool.merge_subfolder import copy_files
+from tool.video.yz_gen_gifs_for_fvd_subfolders import create_gif_from_folder
 
 class WarmupLinearLR(T.optim.lr_scheduler._LRScheduler):
     def __init__(
@@ -572,55 +573,74 @@ class Agent():
         else:
             eval_log_dir = os.path.join(self.log_dir, 'eval_step_%d' % (self.global_step))
 
-        if gt_save_path:
-            gt_folder = gt_save_path
-        else:
-            gt_folder = os.path.join(eval_log_dir, 'gt_png')
-            if not os.path.exists(gt_folder):
-                gt_folder = os.path.join(eval_log_dir, 'gt')
+        #!  For Image
+        # if gt_save_path:
+        #     gt_folder = gt_save_path
+        # else:
+        #     gt_folder = os.path.join(eval_log_dir, 'gt_png')
+        #     if not os.path.exists(gt_folder):
+        #         gt_folder = os.path.join(eval_log_dir, 'gt')
 
-        if pred_save_path:
-            pred_folder = pred_save_path
-        else:
-            pred_folder = os.path.join(eval_log_dir, 'pred_png')
-            if not os.path.exists(pred_folder):
-                pred_folder = os.path.join(eval_log_dir, 'pred')
+        # if pred_save_path:
+        #     pred_folder = pred_save_path
+        # else:
+        #     pred_folder = os.path.join(eval_log_dir, 'pred_png')
+        #     if not os.path.exists(pred_folder):
+        #         pred_folder = os.path.join(eval_log_dir, 'pred') 
+        if is_main_process():
+            copy_files(pred_save_path, pred_save_path + "_frames", False, -1)
+            copy_files(gt_save_path, gt_save_path + "_frames", False, -1)
+            create_gif_from_folder(input_folder=pred_save_path, output_folder=pred_save_path + "_16framemp4", fps=3, num_workers=4, format='mp4')
+            create_gif_from_folder(input_folder=gt_save_path, output_folder=gt_save_path + "_16framemp4", fps=3, num_workers=4, format='mp4')
 
-        if os.path.exists(gt_folder) and os.path.exists(pred_folder):
-            if is_main_process():
+        pred_folder, gt_folder = pred_save_path + "_frames", gt_save_path + "_frames"
+
+        if is_main_process():
+            if os.path.exists(gt_folder) and os.path.exists(pred_folder):
                 try: 
                     from tool.cleanfid.fid import compute_fid
                     result = compute_fid(gt_folder, pred_folder)
                     logger.info(f"FID is {result}")
                     eval_meter.update({'FID': result})
-                except Exception as e:
-                    logger.warning(f"Failed to calculate FID, {e}")
-        else:
-            logger.warning(
-                f'Failed to calculate FID, gt {gt_folder}, {os.path.exists(gt_folder)}\npred {pred_folder}, {os.path.exists(pred_folder)}')
-        
-        gt_folder = os.path.join(eval_log_dir, 'gt_gif')
-        if not os.path.exists(gt_folder):
-            gt_folder = os.path.join(eval_log_dir, 'gt')
-        pred_folder = os.path.join(eval_log_dir, 'pred_gif')
-        if not os.path.exists(pred_folder):
-            pred_folder = os.path.join(eval_log_dir, 'pred')
 
-        if os.path.exists(gt_folder) and os.path.exists(pred_folder):
-            if is_main_process():
-                try: 
                     from tool.metrics.metric_center import get_all_eval_scores
                     result = get_all_eval_scores(
                         self.args.root_dir, gt_folder, pred_folder,
                         sample_duration=self.args.max_video_len,
-                        metrics=['fid-img', 'fid-vid', 'fvd'])
+                        metrics=['l1', 'ssim', 'psnr'])
+                    logger.info(f"Image gen eval {result}")
+                    eval_meter.update(result)
+                except Exception as e:
+                    logger.warning(f"Failed to calculate FID, {e}")
+            else:
+                logger.warning(
+                    f'Failed to calculate FID, gt {gt_folder}, {os.path.exists(gt_folder)}\npred {pred_folder}, {os.path.exists(pred_folder)}')
+            
+        #!  For Video
+        pred_folder, gt_folder = pred_save_path + "_16framemp4", gt_save_path + "_16framemp4"
+        # gt_folder = os.path.join(eval_log_dir, 'gt_gif')
+        # if not os.path.exists(gt_folder):
+        #     gt_folder = os.path.join(eval_log_dir, 'gt')
+        # pred_folder = os.path.join(eval_log_dir, 'pred_gif')
+        # if not os.path.exists(pred_folder):
+        #     pred_folder = os.path.join(eval_log_dir, 'pred')
+        
+        if is_main_process():
+            if os.path.exists(gt_folder) and os.path.exists(pred_folder):    
+                try: 
+                    from tool.metrics.metric_center import get_all_eval_scores
+                    result = get_all_eval_scores(
+                        self.args.root_dir, gt_folder, pred_folder,
+                        metrics=['fid-vid', 'fvd', 'dtssd'],
+                        number_sample_frames=16, 
+                        sample_duration=16)
                     logger.info(f"Video gen eval {result}")
                     eval_meter.update(result)
                 except Exception as e:
                     logger.warning(f"Failed to eval video gen, {e}")
-        else:
-            logger.warning(
-                f'Failed to eval video gen, gt {gt_folder}, {os.path.exists(gt_folder)}\npred {pred_folder}, {os.path.exists(pred_folder)}')
+            else:
+                logger.warning(
+                    f'Failed to eval video gen, gt {gt_folder}, {os.path.exists(gt_folder)}\npred {pred_folder}, {os.path.exists(pred_folder)}')
 
         if self.args.eval_visu and is_main_process() and len({**eval_meter.avg}):
             json.dump({**eval_meter.avg}, open(f"{eval_log_dir}/metrics.json", "w"))
